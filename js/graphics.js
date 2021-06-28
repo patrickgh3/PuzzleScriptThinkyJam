@@ -48,14 +48,14 @@ var spriteimages;
 function regenSpriteImages() {
 	if (textMode) {
 		regenText();
-		return;
+		//return;
 	} else if (levelEditorOpened) {
         textImages['editor_s'] = createSprite('chars',editor_s_grille,undefined);
     }
     
-    if (state.levels.length===0) {
-        return;
-    }
+    //if (state.levels.length===0) {
+    //    return;
+    //}
     spriteimages = [];
 
     for (var i = 0; i < sprites.length; i++) {
@@ -191,7 +191,14 @@ function glyphCount(){
     return count;
 }
 
+function pat_draw_sprite(i, j, sprite_index) {
+    var sprite = spriteimages[sprite_index];
+    ctx.drawImage(sprite, xoffset + i * cellwidth, yoffset + j * cellheight, cellheight*1.15, cellheight);
+}
+
 function redraw() {
+    var pat_title = textMode && titleScreen && state.levels.length > 0;
+
     if (cellwidth===0||cellheight===0) {
         return;
     }
@@ -200,6 +207,7 @@ function redraw() {
     }
 
     if (textMode) {
+
         ctx.fillStyle = state.bgcolor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -208,13 +216,33 @@ function redraw() {
                 var ch = titleImage[j].charAt(i);
                 if (ch in textImages) {
                     var sprite = textImages[ch];
-                    ctx.drawImage(sprite, xoffset + i * cellwidth, yoffset + j * cellheight);                   
+                    ctx.drawImage(sprite, xoffset + i * cellwidth, yoffset + j * cellheight);
                 }
             }
         }
+
+        if (pat_title) {
+            pat_draw_sprite(1+titleSelected*2, 5+titleSelection, 7); // Player
+            pat_draw_sprite(12, 2, 12); // Vacuum
+            //pat_draw_sprite(27, 11, 20); // Target
+
+            var crate_x = 25
+            var el_x = 30
+            pat_draw_sprite(crate_x, 4, 11); // Crate
+            var el = elephantOnMenu();
+            if (el)  pat_draw_sprite(el_x, 4, 2); // Elephant
+            for (var i=0; i<pat_levels.length; i++) {
+                pat_draw_sprite(crate_x, 5+i, 36); // Check box
+                if (storageGet(i, false))  pat_draw_sprite(crate_x, 5+i, 37); // Check
+                if (el)  pat_draw_sprite(el_x, 5+i, 36); // Check box
+                if (storageGet(i, true))   pat_draw_sprite(el_x, 5+i, 37); // Check
+            }
+        }
+
         return;
     } else {
         ctx.fillStyle = state.bgcolor;
+        //ctx.fillStyle = "#eb8931";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         var mini=0;

@@ -12,6 +12,34 @@ z to undo, r to restart...........
 */
 
 
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+var level_names = ["1 -     Warm-up", "2 - Thin Closet", "3 -  Vac Rescue", "4 -   Warehouse", "5 -     Clutter"]
+var pat_levels = []
+var options = []
+var pat_level_index = 0
+var pat_win_normal = false
+var pat_win_el = false
+
+var pat_menu_template = [
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	"..................................",
+	".arrow keys to move...............",
+	".X to wait........................",
+	".Z to undo, R to restart..........",
+];
+
+
 var RandomGen = new RNG();
 
 var intro_template = [
@@ -21,9 +49,11 @@ var intro_template = [
 	"......Puzzle Script Terminal......",
 	"..............v 1.7...............",
 	"..................................",
-	"..................................",
+	".............modified!............",
 	"..................................",
 	".........insert cartridge.........",
+	"..................................",
+	"..................................",
 	"..................................",
 	"..................................",
 	"..................................",
@@ -42,6 +72,8 @@ var messagecontainer_template = [
 	"..................................",
 	"..................................",
 	"..........X to continue...........",
+	"..................................",
+	"..................................",
 	"..................................",
 	".................................."
 ];
@@ -138,8 +170,8 @@ var titletemplate_select1_selected = [
 	"................................."];
 
 var titleImage=[];
-var titleWidth=titletemplate_select1[0].length;
-var titleHeight=titletemplate_select1.length;
+var titleWidth=pat_menu_template[0].length;
+var titleHeight=pat_menu_template.length;
 var textMode=true;
 var titleScreen=true;
 var titleMode=0;//1 means there are options
@@ -157,7 +189,25 @@ function unloadGame() {
 
 function generateTitleScreen()
 {
-	titleMode=(curlevel>0||curlevelTarget!==null)?1:0;
+    pat_levels = []
+    options = []
+    var first_message_index = 0;
+
+    for (var i=0; i<state.levels.length; i++) {
+        var level = state.levels[i];
+        if (level.message == null) {
+            var j = pat_levels.length;
+            pat_levels.push(first_message_index);
+            options.push(level_names[j]);
+            //options.push((j+1).toString()+" - "+level_names[j]);
+            first_message_index = i+1;
+        }
+    }
+
+    options.push("Reset save data")
+
+	//titleMode=(curlevel>0||curlevelTarget!==null)?1:0;
+    titleMode = 1;
 
 	if (state.levels.length===0) {
 		titleImage=intro_template;
@@ -191,19 +241,23 @@ function generateTitleScreen()
 		}
 	}
 
-	var noAction = 'noaction' in state.metadata;	
-	var noUndo = 'noundo' in state.metadata;
-	var noRestart = 'norestart' in state.metadata;
-	if (noUndo && noRestart) {
-		titleImage[11]="..............................................";
-	} else if (noUndo) {
-		titleImage[11]=".......R to restart...........................";
-	} else if (noRestart) {
-		titleImage[11]=".Z to undo.....................";
-	}
-	if (noAction) {
-		titleImage[10]=".......X to select............................";
-	}
+    titleImage = deepClone(pat_menu_template);		
+
+    if (false) {
+        var noAction = 'noaction' in state.metadata;	
+        var noUndo = 'noundo' in state.metadata;
+        var noRestart = 'norestart' in state.metadata;
+        if (noUndo && noRestart) {
+            titleImage[11]="..............................................";
+        } else if (noUndo) {
+            titleImage[11]=".......R to restart...........................";
+        } else if (noRestart) {
+            titleImage[11]=".Z to undo.....................";
+        }
+        if (noAction) {
+            titleImage[10]=".......X to select............................";
+        }
+    }
 	for (var i=0;i<titleImage.length;i++)
 	{
 		titleImage[i]=titleImage[i].replace(/\./g, ' ');
@@ -228,8 +282,8 @@ function generateTitleScreen()
 		var titleLength=titleline.length;
 		var lmargin = ((width-titleLength)/2)|0;
 		var rmargin = width-titleLength-lmargin;
-		var row = titleImage[1+i];
-		titleImage[1+i]=row.slice(0,lmargin)+titleline+row.slice(lmargin+titleline.length);
+		var row = titleImage[0+i];
+		titleImage[0+i]=row.slice(0,lmargin)+titleline+row.slice(lmargin+titleline.length);
 	}
 	if (state.metadata.author!==undefined) {
 		var attribution="by "+state.metadata.author;
@@ -246,10 +300,22 @@ function generateTitleScreen()
 			if (line.length>width){
 				line=line.slice(0,width);
 			}
-			var row = titleImage[3+i];
-			titleImage[3+i]=row.slice(0,width-line.length)+line;
+			var row = titleImage[2+i];
+			titleImage[2+i]=row.slice(0,width-line.length)+line;
 		}
 	}
+
+    // Options
+    for (var i=0; i<options.length; i++) {
+        var line = options[i] + "            ";
+        var row = titleImage[5+i];
+        titleImage[5+i] = row.slice(0,width-line.length)+line;
+    }
+    if (hundredPercent()) {
+        var line = "Thank you for playing! :)    ";
+        var row = titleImage[5+i];
+        titleImage[5+i] = row.slice(0,width-line.length)+line;
+    }
 
 }
 
@@ -402,8 +468,9 @@ function loadLevelFromLevelDat(state,leveldat,randomseed) {
 	RandomGen = new RNG(loadedLevelSeed);
 	forceRegenImages=true;
 	titleScreen=false;
-	titleMode=(curlevel>0||curlevelTarget!==null)?1:0;
-	titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+	//titleMode=(curlevel>0||curlevelTarget!==null)?1:0;
+    titleMode=1;
+	//titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
 	titleSelected=false;
     againing=false;
     if (leveldat===undefined) {
@@ -509,9 +576,9 @@ var sprites = [
 
 
 generateTitleScreen();
-if (titleMode>0){
-	titleSelection=1;
-}
+//if (titleMode>0){
+//	titleSelection=1;
+//}
 
 canvasResize();
 
@@ -692,7 +759,7 @@ function setGameState(_state, command, randomseed) {
 		    titleScreen=true;
 		    tryPlayTitleSound();
 		    textMode=true;
-		    titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+		    //titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
 		    titleSelected=false;
 		    quittingMessageScreen=false;
 		    quittingTitleScreen=false;
@@ -720,7 +787,7 @@ function setGameState(_state, command, randomseed) {
 			    timer=0;
 			    titleScreen=false;
 			    textMode=false;
-			    titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+			    //titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
 			    titleSelected=false;
 			    quittingMessageScreen=false;
 			    quittingTitleScreen=false;
@@ -739,7 +806,7 @@ function setGameState(_state, command, randomseed) {
 		    timer=0;
 		    titleScreen=false;
 		    textMode=false;
-		    titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+		    //titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
 		    titleSelected=false;
 		    quittingMessageScreen=false;
 		    quittingTitleScreen=false;
@@ -759,7 +826,7 @@ function setGameState(_state, command, randomseed) {
 				    timer=0;
 				    titleScreen=false;
 				    textMode=false;
-				    titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+				    //titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
 				    titleSelected=false;
 				    quittingMessageScreen=false;
 				    quittingTitleScreen=false;
@@ -2552,9 +2619,17 @@ function checkWin(dontDoWin) {
 	}
 
 	var won= false;
+    var pat_passed = [];
+
 	if (state.winconditions.length>0)  {
 		var passed=true;
+
+        // Split win conditions into two sections:
+        // 0, 1
+        // 2, 3
 		for (var wcIndex=0;wcIndex<state.winconditions.length;wcIndex++) {
+            if (wcIndex == 2) {
+            }
 			var wincondition = state.winconditions[wcIndex];
 			var filter1 = wincondition[1];
 			var filter2 = wincondition[2];
@@ -2605,9 +2680,16 @@ function checkWin(dontDoWin) {
 			if (rulePassed===false) {
 				passed=false;
 			}
+
+            pat_passed[wcIndex] = rulePassed;
 		}
 		won=passed;
 	}
+
+    //console.log(pat_passed);
+    pat_win_normal = pat_passed[0] && pat_passed[1]
+    pat_win_el = pat_passed[2] && pat_passed[3]
+    won = pat_win_normal || pat_win_el;
 
 	if (won) {
 		if (runrulesonlevelstart_phase){
@@ -2634,6 +2716,48 @@ function DoWin() {
 
 	winning=true;
 	timer=0;
+
+    if (pat_win_normal)  storageSet(pat_level_index, false, true)
+    if (pat_win_el)      storageSet(pat_level_index, true,  true)
+    //storageSet(pat_level_index, true,  true)
+    //console.log("wcIndex: "+wcIndex.toString());
+    //console.log("passed! pat_level_index="+pat_level_index.toString())
+    //console.log("checking now: "+storageGet(pat_level_index, false));
+}
+
+function storageKey(num, el) {
+    if (el)  return "elwon_"+num.toString();
+    return "won_"+num.toString();
+}
+
+function storageSet(num, el, val) {
+    localStorage[storageKey(num, el)] = val;
+}
+
+function storageGet(num, el) {
+    return localStorage[storageKey(num, el)] == "true";
+}
+
+function elephantOnMenu() {
+    var allWon = true;
+
+    for (var i=0; i<pat_levels.length; i++) {
+        if (storageGet(i, true))  return true;
+        if (!storageGet(i, false))  allWon = false;
+    }
+
+    if (allWon) return true;
+
+    return false;
+}
+
+function hundredPercent() {
+    //return true;
+    for (var i=0; i<pat_levels.length; i++) {
+        if (!storageGet(i, true))  return false;
+        if (!storageGet(i, false))  return false;
+    }
+    return true;
 }
 
 /*
@@ -2649,6 +2773,8 @@ function anyMovements() {
 
 
 function nextLevel() {
+    //console.log("nextLevel");
+
     againing=false;
 	messagetext="";
 	if (state && state.levels && (curlevel>state.levels.length) ){
@@ -2656,16 +2782,23 @@ function nextLevel() {
 	}
 	
 	if (titleScreen) {
-		if (titleSelection===0) {
-			//new game
+        // Reset save data
+		if (options[titleSelection] == "Reset save data") {
+            for (var i=0; i<pat_levels.length; i++) {
+                storageSet(i, false, false);
+                storageSet(i, true,  false);
+            }
+
 			curlevel=0;
 			curlevelTarget=null;
+			goToTitleScreen();
+            titleSelected=false;
+            titleSelection=0;
 		} 			
-		if (curlevelTarget!==null){			
-			loadLevelFromStateTarget(state,curlevel,curlevelTarget);
-		} else {
-			loadLevelFromState(state,curlevel);
-		}
+        else {
+            pat_level_index = titleSelection
+			loadLevelFromState(state, pat_levels[titleSelection]);
+        }
 	} else {	
 		if (hasUsedCheckpoint){
 			curlevelTarget=null;
@@ -2673,17 +2806,25 @@ function nextLevel() {
 		}
 		if (curlevel<(state.levels.length-1))
 		{			
-			curlevel++;
-			textMode=false;
-			titleScreen=false;
-			quittingMessageScreen=false;
-			messageselected=false;
+            if (state.levels[curlevel].message == null) {
+                curlevel=0;
+                curlevelTarget=null;
+                goToTitleScreen();
+                titleSelected=false;
+            }
+            else {
+                curlevel++;
+                textMode=false;
+                titleScreen=false;
+                quittingMessageScreen=false;
+                messageselected=false;
 
-			if (curlevelTarget!==null){			
-				loadLevelFromStateTarget(state,curlevel,curlevelTarget);
-			} else {
-				loadLevelFromState(state,curlevel);
-			}
+                if (curlevelTarget!==null){			
+                    loadLevelFromStateTarget(state,curlevel,curlevelTarget);
+                } else {
+                    loadLevelFromState(state,curlevel);
+                }
+            }
 		} else {
 			try{
 				if (!!window.localStorage) {
@@ -2730,7 +2871,8 @@ function goToTitleScreen(){
 	titleScreen=true;
 	textMode=true;
 	doSetupTitleScreenLevelContinue();
-	titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+	//titleSelection=(curlevel>0||curlevelTarget!==null)?1:0;
+    titleSelection = pat_level_index;
 	generateTitleScreen();
 }
 
