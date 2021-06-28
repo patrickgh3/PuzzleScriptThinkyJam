@@ -747,10 +747,13 @@ function checkKey(e,justPressed) {
     			}
     			else if (inputdir===0||inputdir===2) {
     				if (inputdir===0){
-    					titleSelection=0;    					
+    					titleSelection--;    					
     				} else {
-    					titleSelection=1;    					    					
+    					titleSelection++;    					    					
     				}
+                    if (titleSelection < 0)  titleSelection = options.length-1;
+                    if (titleSelection >= options.length)  titleSelection = 0;
+                    //titleSelection = clamp(titleSelection, 0, options.length-1);
     				generateTitleScreen();
     				redraw();
     			}
@@ -790,7 +793,7 @@ function update() {
     timer+=deltatime;
     input_throttle_timer+=deltatime;
     if (quittingTitleScreen) {
-        if (timer/1000>0.3) {
+        if (timer/1000>0.15) {
             quittingTitleScreen=false;
             nextLevel();
         }
@@ -813,7 +816,8 @@ function update() {
             	messagetext="";
             	textMode=false;
 				titleScreen=false;
-				titleMode=(curlevel>0||curlevelTarget!==null)?1:0;
+				//titleMode=(curlevel>0||curlevelTarget!==null)?1:0;
+                titleMode=1;
 				titleSelected=false;
 				titleSelection=0;
     			canvasResize();  

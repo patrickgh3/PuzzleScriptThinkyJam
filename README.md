@@ -32,3 +32,24 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+Patrick notes
+-----
+
+    git subtree push --prefix src origin gh-pages
+
+    pancelor — 06/08/2021
+    how'd you get github pages to host the src directory? I thought there were only 2 options: the root directory or a docs directory. edit: ah, or a separate branch... are you doing something clever to mirror master -- ./src as gh-pages -- ., or are you doing it manually?
+    Menderbug — 06/08/2021
+    git subtree push --prefix src origin gh-pages
+    that makes the gh-pages branch essentially just point at the src subfolder
+    so the index.html is at the root of gh-pages
+    Menderbug — 06/08/2021
+    Ah, but I'm not sure if it's automatic. I think I'll probably have to run that command each time I make changes
+    Still more convenient than changing the repo structure
+    clementsparrow — 06/08/2021
+    you could use GitHub's APIs to make it automatically, but it's probably too much work
+    Menderbug — 06/08/2021
+    I could probably drop the command in a post-commit hook or something
+    I'll worry about that if I end up making lots of changes to this fork
+    there's some audio-related things I want to tweak, but I don't have any other plans for it at the moment
